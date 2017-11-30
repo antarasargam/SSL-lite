@@ -1,4 +1,4 @@
-#Server
+#Server IP address 20174.1.666.46
 
 import hashlib
 from .Certfactory import getCertsForAddr, getPrivateKeyForAddr, getRootCert
