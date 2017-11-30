@@ -2,13 +2,13 @@
 
 import logging, os, re
 import hashlib, struct
-from Lab3.packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
+from .packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
 from playground.network.common.Protocol import StackingProtocol, StackingProtocolFactory, StackingTransport
 from .CertFactory import getCertsForAddr, getRootCert, getPrivateKeyForAddr
 from playground.common import CipherUtil
 from cryptography.hazmat.primitives.asymmetric import padding, utils
 from cryptography.hazmat.primitives import hashes
-from Lab3.packets import BasePacketType
+from .packets import BasePacketType
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.primitives.ciphers.modes import CTR
