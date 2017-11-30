@@ -1,22 +1,22 @@
-#Server IP address 20174.1.666.46
+#Server
 
-import hashlib
-from .Certfactory import getCertsForAddr, getPrivateKeyForAddr, getRootCert
-from .packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
-from playground.network.common.Protocol import StackingProtocol, StackingTransport
-import os, re
+import asyncio
+import playground
+import hashlib, os, re
+from .CertFactory import getPrivateKeyForAddr, getRootCert, getCertsForAddr
+from Lab3.packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
+from playground.network.common.Protocol import StackingProtocol, StackingProtocolFactory, StackingTransport
+import os
 from playground.common import CipherUtil
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import padding, utils
 from cryptography.hazmat.primitives import hashes
-from .packets import BasePacketType
-
+from Lab3.packets import BasePacketType
+from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.primitives.ciphers.modes import CTR
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
-from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.backends import default_backend
-
 backend = default_backend()
 
 class CIPHER_AES128_CTR(object):
@@ -60,6 +60,7 @@ class PLSServer(StackingProtocol):
     def __init__(self):
         self.deserializer = BasePacketType.Deserializer()
         self.transport = None
+        self.plsserverstate = 0
 
     def connection_made(self, transport):
         print("##############PLSServer connection made##################")
@@ -89,7 +90,7 @@ class PLSServer(StackingProtocol):
         rootcert = CipherUtil.getCertFromBytes(encodedrootcert)
         rootsubject = CipherUtil.getCertSubject(rootcert)
 
-        if "20174.1.666.46" == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
+        if "20174.1.666.2" == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
             print("Checked that the peerAddress and the received commmon name in the certificate is the same!")
 
             splitlist = re.split('(.*)\.(.*)\.(.*)\.(.*)', receivedIDCommonName)[1:4]
@@ -154,7 +155,7 @@ class PLSServer(StackingProtocol):
         print("####################SSL layer data received called!#####################")
         self.deserializer.update(data)
         for packet in self.deserializer.nextPackets():
-            if isinstance(packet, PlsHello):
+            if isinstance(packet, PlsHello) and self.plsserverstate == 0:
                 self.incoming_cert.append(CipherUtil.getCertFromBytes(packet.Certs[0]))
                 self.incoming_cert.append(CipherUtil.getCertFromBytes(packet.Certs[1]))
                 self.incoming_cert.append(CipherUtil.getCertFromBytes(packet.Certs[2]))
@@ -176,11 +177,12 @@ class PLSServer(StackingProtocol):
                     serverhello.Certs.append(pubkey)
                     serverhello.Certs.append(root)
                     srvhello = serverhello.__serialize__()
+                    self.plsserverstate += 1
                     print("Sent Server Hello!\n")
                     self.m.update(srvhello)
                     self.transport.write(srvhello)
 
-            if isinstance(packet, PlsKeyExchange):
+            if isinstance(packet, PlsKeyExchange) and self.plsserverstate == 1:
                 print("Received Client Key Exchange. Server Server Keys\n\n")
                 self.m.update(packet.__serialize__())
                 myprivatekey = getPrivateKeyForAddr(self.address)
@@ -199,11 +201,12 @@ class PLSServer(StackingProtocol):
                 #print("Encrypted String is: ", encrypted)
                 serverkey.PreKey = encrypted
                 skey = serverkey.__serialize__()
+                self.plsserverstate += 1
                 print("Sent the Prekey to Client.\n\n")
                 self.m.update(skey)
                 self.transport.write(skey)
 
-            if isinstance(packet, PlsHandshakeDone):
+            if isinstance(packet, PlsHandshakeDone) and self.plsserverstate == 2:
                 print("Received Client Handshake done message.")
                 clientdigest = packet.ValidationHash
                 serverdigest = self.m.digest()
@@ -218,9 +221,10 @@ class PLSServer(StackingProtocol):
                     higherTransport = StackingTransport(plstransport)
                     self.higherProtocol().connection_made(higherTransport)
                 hdone_s = hdone.__serialize__()
+                self.plsserverstate += 1
                 self.transport.write(hdone_s)
 
-            if isinstance(packet, PlsData):
+            if isinstance(packet, PlsData) and self.plsserverstate > 2:
                 print("##################Recieved Data Packet from PLSClient###########################")
                 self.ctr = 0
                 if self.mac_verification_engine(packet.Ciphertext, packet.Mac):
