@@ -1,16 +1,16 @@
-#Server
+#Server IP address 20174.1.66.45
 
 import asyncio
 import playground
 import hashlib, os, re
 from .CertFactory import getPrivateKeyForAddr, getRootCert, getCertsForAddr
-from Lab3.packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
+from .packets import PlsHello, PlsData, PlsHandshakeDone, PlsKeyExchange, PlsClose
 from playground.network.common.Protocol import StackingProtocol, StackingProtocolFactory, StackingTransport
 import os
 from playground.common import CipherUtil
 from cryptography.hazmat.primitives.asymmetric import padding, utils
 from cryptography.hazmat.primitives import hashes
-from Lab3.packets import BasePacketType
+from .packets import BasePacketType
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.primitives.ciphers.modes import CTR
@@ -90,7 +90,7 @@ class PLSServer(StackingProtocol):
         rootcert = CipherUtil.getCertFromBytes(encodedrootcert)
         rootsubject = CipherUtil.getCertSubject(rootcert)
 
-        if "20174.1.666.2" == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
+        if "20174.1.666.46" == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
             print("Checked that the peerAddress and the received commmon name in the certificate is the same!")
 
             splitlist = re.split('(.*)\.(.*)\.(.*)\.(.*)', receivedIDCommonName)[1:4]
