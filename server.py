@@ -90,7 +90,7 @@ class PLSServer(StackingProtocol):
         rootcert = CipherUtil.getCertFromBytes(encodedrootcert)
         rootsubject = CipherUtil.getCertSubject(rootcert)
 
-        if "20174.1.666.46" == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
+        if self.peerAddress == receivedIDCommonName:    #This hardcoded IP address must the peerAddress
             print("Checked that the peerAddress and the received commmon name in the certificate is the same!")
 
             splitlist = re.split('(.*)\.(.*)\.(.*)\.(.*)', receivedIDCommonName)[1:4]
