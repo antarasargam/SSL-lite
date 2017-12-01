@@ -77,7 +77,7 @@ class PLSClient(StackingProtocol):
         clienthello.Nonce = int.from_bytes(os.urandom(8), byteorder='big')  # 12345678
         # print("Client Nonce", clienthello.Nonce)
         self.nc = clienthello.Nonce
-        idcert = getCertsForAddr("20174.1.66.46")  # This hardcoded IP address must the peerAddress
+        idcert = getCertsForAddr(self.address)  # This hardcoded IP address must the peerAddress
         intermediatecert = getCertsForAddr(self.splitaddr)
         root = getRootCert()
         clienthello.Certs = []
@@ -217,7 +217,7 @@ class PLSClient(StackingProtocol):
             if isinstance(packet, PlsKeyExchange) and self.plsclientstate == 2:
                 print("Received Server Key Exchange.")
                 self.m.update(packet.__serialize__())
-                myprivatekey = getPrivateKeyForAddr("20174.1.66.46")  # This hardcoded IP address must the peerAddress
+                myprivatekey = getPrivateKeyForAddr(self.address)  # This hardcoded IP address must the peerAddress
                 serverpriv = CipherUtil.getPrivateKeyFromPemBytes(myprivatekey)
                 decrypted = serverpriv.decrypt(packet.PreKey, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),
                                                                            algorithm=hashes.SHA256(), label=None))
