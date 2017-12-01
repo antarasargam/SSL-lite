@@ -244,14 +244,14 @@ class PLSServer(StackingProtocol):
                         self.ctr = 0
                         #Creating and Sending PlsClose
                         Close = PlsClose()
-                        #Close.Error = "Closing Connection due to 5 Verification failures. Aggrresive Close"
+                        Close.Error = "Closing Connection due to 5 Verification failures. Aggrresive Close"
                         serializeClose = Close.__serialize__()
                         self.transport.write(serializeClose)
                         self.transport.close()
 
             if isinstance(packet, PlsClose):
                 print("######################Received PlsClose from Client######################### ")
-                #self.connection_lost(self)
+                print(packet.Error)
                 self.transport.close()
 
 
