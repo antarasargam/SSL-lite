@@ -264,13 +264,14 @@ class PLSClient(StackingProtocol):
                         # Creating and Sending PlsClose
                         self.ctr = 0
                         Close = PlsClose()
-                        # Close.Error = "Closing Connection due to 5 Verification failures. Aggressive Close."
+                        Close.Error = "Closing Connection due to 5 Verification failures. Aggressive Close."
                         serializeClose = Close.__serialize__()
                         self.transport.write(serializeClose)
                         self.transport.close()
 
             if isinstance(packet, PlsClose):
                 print("#####################Received PlsClose from Server###########################")
+                print(packet.Error)
                 self.transport.close()
 
     def key_generator(self):
